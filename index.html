@@ -22,9 +22,9 @@
         const { useState, useEffect, useMemo } = React;
 
         /** 🔐 CONFIGURATION
-         * 1. Your Client ID has been updated from your error message.
-         * 2. IMPORTANT: Replace <PASTE_YOUR_TENANT_ID_HERE> with your Directory (tenant) ID.
-         * Find this on the "Overview" page of your App Registration in Azure.
+         * 1. Your Client ID is verified from your error message.
+         * 2. IMPORTANT: You MUST replace the Tenant ID placeholder below.
+         * The error AADSTS50194 happens because 'common' is used instead of your actual ID.
          */
         const CONFIG_DATA = {
             clientId: "e284416c-ae2d-43f7-9f0f-f251aef8c86a", 
@@ -38,7 +38,7 @@
         const msalConfig = {
             auth: {
                 clientId: CONFIG_DATA.clientId,
-                // Updated authority to use your specific tenant instead of 'common'
+                // This line now points directly to your company tenant to fix the AADSTS50194 error
                 authority: `https://login.microsoftonline.com/${CONFIG_DATA.tenantId}`,
                 redirectUri: window.location.origin + window.location.pathname
             },
@@ -63,8 +63,8 @@
             // Initialize MSAL on load
             useEffect(() => {
                 try {
-                    if (CONFIG_DATA.tenantId.includes("<PASTE")) {
-                        setError("Please update the code with your Tenant ID from Azure.");
+                    if (CONFIG_DATA.tenantId.includes("PASTE_YOUR")) {
+                        setError("Update Required: Please enter your Tenant ID in the code (Line 31).");
                         return;
                     }
                     const pca = new msal.PublicClientApplication(msalConfig);
@@ -86,7 +86,7 @@
                     setAccount(response.account);
                 } catch (err) {
                     console.error(err);
-                    setError("Login failed. Please ensure popups are allowed for this site.");
+                    setError("Login failed. Please ensure popups are allowed.");
                 }
             };
 
@@ -200,7 +200,7 @@
                             >
                                 Sign In
                             </button>
-                            {error && <p className="mt-4 text-xs text-red-500">{error}</p>}
+                            {error && <p className="mt-4 text-xs text-red-500 font-bold">{error}</p>}
                         </div>
                     </div>
                 );
