@@ -22,12 +22,13 @@
         const { useState, useEffect, useMemo } = React;
 
         /** 🔐 CONFIGURATION
-         * 1. Paste your Client ID from Azure below.
-         * 2. The Site ID and List ID are already set for your StaffingTeam site.
+         * 1. Your Client ID has been updated from your error message.
+         * 2. IMPORTANT: Replace <PASTE_YOUR_TENANT_ID_HERE> with your Directory (tenant) ID.
+         * Find this on the "Overview" page of your App Registration in Azure.
          */
         const CONFIG_DATA = {
             clientId: "e284416c-ae2d-43f7-9f0f-f251aef8c86a", 
-            authority: "https://login.microsoftonline.com/common",
+            tenantId: "5b12414a-1f8c-44b7-abc8-f1f4433e5cb2", 
             siteId: "teamholiday.sharepoint.com,99f0de2d-fe8e-4a4d-b84b-c11f0f222d3f", 
             listId: "fcb9fcde-8bef-43d7-8bab-6800a7401599", 
             statusColumn: "Status", 
@@ -37,7 +38,8 @@
         const msalConfig = {
             auth: {
                 clientId: CONFIG_DATA.clientId,
-                authority: CONFIG_DATA.authority,
+                // Updated authority to use your specific tenant instead of 'common'
+                authority: `https://login.microsoftonline.com/${CONFIG_DATA.tenantId}`,
                 redirectUri: window.location.origin + window.location.pathname
             },
             cache: {
@@ -61,6 +63,10 @@
             // Initialize MSAL on load
             useEffect(() => {
                 try {
+                    if (CONFIG_DATA.tenantId.includes("<PASTE")) {
+                        setError("Please update the code with your Tenant ID from Azure.");
+                        return;
+                    }
                     const pca = new msal.PublicClientApplication(msalConfig);
                     setMsalInstance(pca);
                     
@@ -70,7 +76,7 @@
                     }
                 } catch (e) {
                     console.error("MSAL Init Error:", e);
-                    setError("Configuration Error: Please check your Client ID.");
+                    setError("Configuration Error: Please check your Tenant ID and Client ID.");
                 }
             }, []);
 
@@ -111,7 +117,6 @@
                 setError(null);
                 try {
                     const token = await getAccessToken();
-                    // Using the site and list IDs you provided
                     const url = `https://graph.microsoft.com/v1.0/sites/${CONFIG_DATA.siteId}/lists/${CONFIG_DATA.listId}/items?expand=fields($select=id,Title,${CONFIG_DATA.statusColumn},${CONFIG_DATA.descriptionColumn},Created,Modified)`;
                     
                     const response = await fetch(url, {
@@ -152,7 +157,6 @@
                     
                     if (!response.ok) throw new Error("Update failed.");
                     
-                    // Update UI locally
                     setTasks(prev => prev.map(t => t.id === itemId ? { 
                         ...t, 
                         fields: { ...t.fields, [CONFIG_DATA.statusColumn]: newStatus, Modified: new Date().toISOString() } 
@@ -181,7 +185,6 @@
                 }
             };
 
-            // Login Screen UI
             if (!account) {
                 return (
                     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-6">
@@ -203,7 +206,6 @@
                 );
             }
 
-            // Main App UI
             return (
                 <div className="min-h-screen bg-gray-50 p-4 md:p-8 text-slate-900">
                     <div className="max-w-4xl mx-auto">
